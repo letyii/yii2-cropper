@@ -1,47 +1,50 @@
 <?php
 /**
- * Homepage: http://www.tinymce.com/
- * Examples: http://www.tinymce.com/tryit/basic.php
- * Options: http://www.tinymce.com/wiki.php/Configuration
- * 
- * Let Yii2 Tinymce v4.0.21 (Yii Framework 2.0 extention)
  * @copyright Copyright (c) 2014 Let.,ltd
  * @author Ngua Go <nguago@let.vn>
  */
 
 namespace letyii\cropper;
-use yii\helpers\Html;
 use yii\helpers\Json;
-use letyii\tinymce\TinymceAssets;
+use yii\helpers\FileHelper;
+use yii\imagine\BaseImage;
 
-class Cropper extends \yii\base\Widget
+class Cropper
 {
-    public $src;
-
     public $data;
 
     public $file;
-
-    public $dst;
-
-    public $type;
-
-    public $extension;
-
-    public $msg;
     
     public $fileName;
 
-    public $storage;
+    public $folder;
     
-    /**
-	 * Initializes the widget.
-	 */
-	public function init() {
-//		 CropperAssets::register($this->view);
-	}
+    private function getData(){
+        return Json::decode($this->data);
+    }
 
-	public function test() {
+	public function crop() {
+        $this->saveOriginal();
+    }
+    
+    private function saveOriginal() {
+        if (($ext = pathinfo($this->file, PATHINFO_EXTENSION)) !== '')
+            $ext = strtolower($ext);
         
-	}
+        FileHelper::createDirectory($this->folder);
+        
+        $path = $this->folder . DIRECTORY_SEPARATOR;
+        $imageOriginal = $path . $this->fileName . '.original.' . $ext;
+        
+        // Neu anh la anh moi upload
+        if (is_object($this->file)){
+            $this->file->saveAs($imageOriginal);
+        }
+        
+        // Get data image crop
+        $data = $this->getData();
+        
+        // Crop image and save image
+        BaseImage::crop($imageOriginal, $data['width'], $data['height'], [$data['x'], $data['y']])->rotate($data['rotate'])->save($path . $this->fileName . '.' . $ext);
+    }
 }
